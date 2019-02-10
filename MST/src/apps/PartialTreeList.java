@@ -78,11 +78,23 @@ public class PartialTreeList implements Iterable<PartialTree> {
      */
     public PartialTree remove() 
     throws NoSuchElementException {
-    		
-    		/* COMPLETE THIS METHOD */
-    	
-    		return null;
-    }
+        Node node = null;
+        if(rear == null){
+             throw new NoSuchElementException();
+          }else
+          {
+             size--;
+             if(rear.next == rear){
+                 node = rear;
+                 rear = null;
+                 return node.tree;
+             }else{
+                 node = rear.next;
+                 rear.next = rear.next.next;
+                 return node.tree;
+             }
+         }
+     }
 
     /**
      * Removes the tree in this list that contains a given vertex.
@@ -93,10 +105,54 @@ public class PartialTreeList implements Iterable<PartialTree> {
      */
     public PartialTree removeTreeContaining(Vertex vertex) 
     throws NoSuchElementException {
-    		/* COMPLETE THIS METHOD */
-    	
-    		return null;
-     }
+        PartialTree partialTree = null;
+        boolean found = false;
+        Node tree = null;
+        if(rear == null){
+            throw new NoSuchElementException();
+        }
+        Node ptr = rear.next;
+        Node prev = rear;
+        int i = 0;
+        partialTree = removeTree(i, vertex, ptr, found, partialTree, prev);
+        return partialTree;
+    }
+    private PartialTree removeTree(int i,Vertex v,Node ptr, boolean found,PartialTree partialTree,Node prev){
+    	do{
+    		if(removeTreeTraverse(v, ptr.tree,found) == true){
+            if(ptr == rear){
+            	partialTree = ptr.tree;
+                prev.next = rear.next;
+                rear = prev;
+                size--;
+                return partialTree;
+            }else{
+            	partialTree = ptr.tree;
+                prev.next = ptr.next;
+                size--;
+                return partialTree;
+            }
+        }
+           prev = ptr;
+           ptr = ptr.next;
+           i++;
+    	}while(i < size);
+    	return partialTree;
+    }
+	private boolean removeTreeTraverse(Vertex v, PartialTree Tree, boolean found){
+		while(v != null){
+			if(v == Tree.getRoot()){
+				found = true;
+				return true;
+			}
+			if(v.equals(v.parent)){
+        return false;
+			}
+			v = v.parent;
+		}
+		return false;
+	}
+  
     
     /**
      * Gives the number of trees in this list
@@ -149,5 +205,4 @@ public class PartialTreeList implements Iterable<PartialTree> {
     	
     }
 }
-
 
