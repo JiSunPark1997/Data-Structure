@@ -40,13 +40,20 @@ public class LittleSearchEngine {
 	 */
 	public HashMap<String,Occurrence> loadKeywordsFromDocument(String docFile) 
 	throws FileNotFoundException {
-		/** COMPLETE THIS METHOD **/
-		
-		// following line is a placeholder to make the program compile
-		// you should modify it as needed when you write your code
-		return null;
-	}
-	
+		 HashMap<String,Occurrence> kws = new HashMap<String, Occurrence>();
+	     Scanner scanner = new Scanner(new File(docFile));
+	     while(scanner.hasNext()){
+	    	 String word=getKeyword(scanner.next());
+	    	 if(word!=null){
+	    		 if(kws.containsKey(word))
+	    			 kws.get(word).frequency++;
+	    		 else 
+	    			 kws.put(word, new Occurrence(docFile,1));
+	    	 }
+	     }
+	     return kws;
+	    }
+
 	/**
 	 * Merges the keywords for a single document into the master keywordsIndex
 	 * hash table. For each keyword, its Occurrence in the current document
@@ -57,8 +64,55 @@ public class LittleSearchEngine {
 	 * @param kws Keywords hash table for a document
 	 */
 	public void mergeKeywords(HashMap<String,Occurrence> kws) {
-		/** COMPLETE THIS METHOD **/
-	}
+		Iterator iterator = kws.keySet().iterator();
+		int a; 
+		while(iterator.hasNext()) {
+			a = 0; 
+			String s = (String)iterator.next();
+			Occurrence occur = kws.get(s);
+			if (keywordsIndex.containsKey(s)){
+				ArrayList<Occurrence> arrayOccur = keywordsIndex.get(s); 
+				arrayOccur.add(occur); 
+				ArrayList<Integer> result = insertLastOccurrence(arrayOccur); 
+				ArrayList<Occurrence> newOccur = new ArrayList<Occurrence>(); 
+				for (int i = 0; i < arrayOccur.size()-1; i++)
+					newOccur.add(arrayOccur.get(i)); 
+				if (newOccur.size() == 1)
+				{
+					if (newOccur.get(0).frequency > occur.frequency)
+						newOccur.add(occur); 	
+					else 
+						newOccur.add(result.get(result.size()-1), occur);
+				}else if (result.get(result.size()-1) == newOccur.size()-1)
+				{
+					if (occur.frequency <= newOccur.get(newOccur.size()-1).frequency)
+						newOccur.add(occur); 	
+					else
+						newOccur.add(result.get(result.size()-1), occur);
+				}else if (result.get(result.size()-1) == 0)
+				{
+					if (occur.frequency >= newOccur.get(0).frequency)
+					{
+						a = 1; 
+						ArrayList<Occurrence> temp = new ArrayList<Occurrence>(); 
+						temp.add(occur); 
+						temp.addAll(newOccur); 
+						keywordsIndex.put(s, temp);
+					}else
+						newOccur.add(1, occur);
+				}else
+					newOccur.add(result.get(result.size()-1), occur); 
+				if (a!=1)
+					keywordsIndex.put(s, newOccur); 
+			}
+			else{
+				ArrayList<Occurrence> arrayInt = new ArrayList<Occurrence>();
+				arrayInt.add(occur); 
+				keywordsIndex.put(s, arrayInt);
+			}
+				 
+		}
+    }
 	
 	/**
 	 * Given a word, returns it as a keyword if it passes the keyword test,
@@ -72,11 +126,59 @@ public class LittleSearchEngine {
 	 * @return Keyword (word without trailing punctuation, LOWER CASE)
 	 */
 	public String getKeyword(String word) {
-		/** COMPLETE THIS METHOD **/
-		
-		// following line is a placeholder to make the program compile
-		// you should modify it as needed when you write your code
-		return null;
+		String first = "";
+		String mid = ""; 
+		String last = ""; 
+		int a, b, c;
+		if (checkPunc(word)) {	
+			for (a = 0; a < word.length(); a++)
+			{
+				if (!Character.isLetter(word.charAt(a)))
+					break;  
+				else
+					first = first + word.charAt(a); 
+			}
+			for (b = a; b < word.length(); b++)
+			{
+				if (Character.isLetter(word.charAt(b)))
+					break; 
+				else
+					mid = mid + word.charAt(b);
+			}
+			for (c = b; c < word.length(); c++)
+				last = last + word.charAt(c);
+			if (last.isEmpty())
+			{
+			if (noiseWords.contains(first.toLowerCase()))
+					return null;
+				else{
+					if (!first.trim().isEmpty())
+						return first.toLowerCase();
+					else
+						return null; 
+				}
+			}else 
+				return null; 
+		}
+		else{
+			if (noiseWords.contains(word.toLowerCase()))
+				return null;
+			else{
+				if (!word.trim().isEmpty())
+					return word.toLowerCase();
+				else
+					return null;  
+			}
+		}
+    }
+	
+	private static boolean checkPunc(String word){
+		for (int i = 0; i < word.length(); i++)
+		{
+			if (!Character.isLetterOrDigit(word.charAt(i)))
+				return true; 
+		}
+		return false; 
 	}
 	
 	/**
@@ -91,11 +193,31 @@ public class LittleSearchEngine {
 	 *         your code - it is not used elsewhere in the program.
 	 */
 	public ArrayList<Integer> insertLastOccurrence(ArrayList<Occurrence> occs) {
-		/** COMPLETE THIS METHOD **/
-		
-		// following line is a placeholder to make the program compile
-		// you should modify it as needed when you write your code
-		return null;
+		ArrayList<Integer> arrayInt = new ArrayList<Integer>(); 
+		for (int i = 0; i < occs.size()-1; i++)
+		{
+			arrayInt.add(occs.get(i).frequency); 
+		}
+		int a = occs.get(occs.size()-1).frequency; 
+		ArrayList<Integer> result = BS(arrayInt, a, 0, arrayInt.size()-1); 
+		return result;
+	    }
+	
+	private ArrayList<Integer> BS(ArrayList<Integer> array, int key, int min, int max)
+	{
+	  ArrayList<Integer> midpt = new ArrayList<Integer>(); 
+	  while (max >= min)
+	  {
+	      int mid = (min + max) / 2;
+	      midpt.add(mid); 
+	      if (array.get(mid) <  key)
+	    	 max = mid - 1;
+	      else if (array.get(mid) > key )
+	    	  min = mid + 1;
+	      else
+	    	  break; 
+	  }
+	  return midpt; 
 	}
 	
 	/**
@@ -141,11 +263,62 @@ public class LittleSearchEngine {
 	 *         frequencies. The result size is limited to 5 documents. If there are no matches, returns null.
 	 */
 	public ArrayList<String> top5search(String kw1, String kw2) {
-		/** COMPLETE THIS METHOD **/
-		
-		// following line is a placeholder to make the program compile
-		// you should modify it as needed when you write your code
-		return null;
-	
+		ArrayList<String> result = new ArrayList<String>();
+		ArrayList<Occurrence> firstList = keywordsIndex.get(kw1);
+		ArrayList<Occurrence> secondList = keywordsIndex.get(kw2);
+		int i = 0, j = 0; 
+		int total = 0; 
+		if (firstList == null && secondList == null)
+			return result; 
+		else if (firstList==null){
+			while (j < secondList.size() && total < 5){
+				result.add(secondList.get(j).document); 
+				j++; 
+				total++; 
+			}
+		}
+		else if (secondList==null){
+			while (i < firstList.size() && total < 5){
+				result.add(firstList.get(i).document); 
+				i++; 
+				total++; 
+			}
+		}
+		else {	
+			while ((i < firstList.size() || j < secondList.size()) && total < 5) {
+				if (firstList.get(i).frequency > secondList.get(j).frequency 
+						&& (!result.contains(firstList.get(i).document))) {
+					result.add(firstList.get(i).document); 
+					i++;
+					total++; 
+				}
+				else if (firstList.get(i).frequency < secondList.get(j).frequency 
+						&& (!result.contains(secondList.get(j).document))){
+					result.add(secondList.get(j).document); 
+					j++;
+					total++; 
+				}
+				else{
+					if (!result.contains(firstList.get(i).document)){
+						result.add(firstList.get(i).document);
+						total++; 
+						i++;
+					}
+					else
+						i++; 
+					if ((!result.contains(secondList.get(j).document))){
+						if (total < 5){
+							result.add(secondList.get(j).document); 
+							j++;
+							total++; 
+						}
+					}
+					else 
+						j++; 
+					
+				}
+			}
+		}
+		return result;
 	}
 }
